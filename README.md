@@ -1,7 +1,8 @@
 # Try-Let
 
 This is an implementation of a `try-let` similar to the one proposed in
-rust-lang/rfcs#1303, as a syntax extension.
+[RFC #1303](https://github.com/rust-lang/rfcs/pull/1303), as a syntax 
+extension. 
 
 ## Usage
 
