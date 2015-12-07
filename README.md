@@ -6,13 +6,18 @@ This is an implementation of a `try-let` similar to the one proposed in
 [RFC #1303](https://github.com/rust-lang/rfcs/pull/1303), as a syntax 
 extension. 
 
+> _NOTE:_ This is a syntax extension, and thus uses unstable features and
+> will not work on stable rust.
+
 ## Usage
 
 try-let is implemented using a syntax extension instead of a macro, as
 parsing the pattern expression in the way which try-let needs to is no
 possible with a `macro_rules!` macro.
 
-To use the plugin, add `#[plugin(try_let)]` to the top of the project, like so:
+To use the plugin, add `#[plugin(try_let)]` to the top of the project, 
+like so:
+
 ```rust
 #![feature(plugin)]
 #![plugin(try_let)]
