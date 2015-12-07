@@ -92,7 +92,7 @@ let (x,) = match ... {
 A question which some people will be asking now is how are enum variants like
 `None` handled?
 
-```
+```rust
 try_let!(None = ... else return);
 // ... becomes ...
 let () = match ... {
