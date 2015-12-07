@@ -1,5 +1,7 @@
 # Try-Let
 
+[![Build Status](https://travis-ci.org/mystor/rust-try-let.svg?branch=master)](https://travis-ci.org/mystor/rust-try-let)
+
 This is an implementation of a `try-let` similar to the one proposed in
 [RFC #1303](https://github.com/rust-lang/rfcs/pull/1303), as a syntax 
 extension. 
