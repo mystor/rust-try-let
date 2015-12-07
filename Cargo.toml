@@ -1,0 +1,13 @@
+[package]
+name = "try-let"
+version = "0.1.0"
+authors = ["Michael Layzell <michael@thelayzells.com>"]
+
+description = "A syntax extension for a basic try-let form"
+repository = "https://github.com/mystor/rust-try-let"
+readme = "README.md"
+license = "MPL-2.0"
+keywords = ["try-let"]
+
+[lib]
+plugin = true
