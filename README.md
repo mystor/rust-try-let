@@ -12,7 +12,7 @@ extension.
 ## Usage
 
 try-let is implemented using a syntax extension instead of a macro, as
-parsing the pattern expression in the way which try-let needs to is no
+parsing the pattern expression in the way which try-let needs to is not
 possible with a `macro_rules!` macro.
 
 To use the plugin, add `#[plugin(try_let)]` to the top of the project, 
