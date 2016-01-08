@@ -1,5 +1,4 @@
-#![feature(plugin_registrar, rustc_private, vec_push_all)]
-// XXX: vec_push_all renamed to extend_from_slice soon
+#![feature(plugin_registrar, rustc_private)]
 
 #[macro_use]
 extern crate syntax;
@@ -39,8 +38,8 @@ pub fn plugin_registrar(reg: &mut Registry) {
 
 fn get_bind_names(pat: &Pat) -> Vec<(SpannedIdent, Mutability)> {
     match pat.node {
-        PatIdent(BindByRef(mutability), ref si, ref op) |
-        PatIdent(BindByValue(mutability), ref si, ref op) => {
+        PatIdent(BindingMode::ByRef(mutability), ref si, ref op) |
+        PatIdent(BindingMode::ByValue(mutability), ref si, ref op) => {
             let mut res = if let Some(ref p) = *op {
                 get_bind_names(p)
             } else {
@@ -61,14 +60,14 @@ fn get_bind_names(pat: &Pat) -> Vec<(SpannedIdent, Mutability)> {
         PatEnum(_, Some(ref v)) | PatTup(ref v) => {
             let mut res = Vec::new();
             for it in v {
-                res.push_all(&get_bind_names(it));
+                res.extend_from_slice(&get_bind_names(it));
             }
             res
         }
         PatStruct(_, ref v, _) => {
             let mut res = Vec::new();
             for it in v {
-                res.push_all(&get_bind_names(&*it.node.pat));
+                res.extend_from_slice(&get_bind_names(&*it.node.pat));
             }
             res
         }
@@ -76,13 +75,13 @@ fn get_bind_names(pat: &Pat) -> Vec<(SpannedIdent, Mutability)> {
         PatVec(ref v1, ref op, ref v2) => {
             let mut res = Vec::new();
             for it in v1 {
-                res.push_all(&get_bind_names(it));
+                res.extend_from_slice(&get_bind_names(it));
             }
             if let Some(ref p) = *op {
-                res.push_all(&get_bind_names(p));
+                res.extend_from_slice(&get_bind_names(p));
             }
             for it in v2 {
-                res.push_all(&get_bind_names(it));
+                res.extend_from_slice(&get_bind_names(it));
             }
             res
         }
@@ -90,8 +89,8 @@ fn get_bind_names(pat: &Pat) -> Vec<(SpannedIdent, Mutability)> {
     }
 }
 
-fn parse_try_let(mac_span: Span,
-                 parser: &mut Parser) -> PResult<SmallVector<P<Stmt>>> {
+fn parse_try_let<'a>(mac_span: Span,
+                     parser: &mut Parser<'a>) -> PResult<'a, SmallVector<P<Stmt>>> {
     let pat = try!(parser.parse_pat());
     let pat_span = pat.span;
     try!(parser.expect(&token::Eq));
@@ -158,7 +157,7 @@ fn parse_try_let(mac_span: Span,
     let names_pats = names.iter().map(|name| {
         P(Pat{
             id: DUMMY_NODE_ID,
-            node: PatIdent(BindByValue(name.1), name.0, None),
+            node: PatIdent(BindingMode::ByValue(name.1), name.0, None),
             span: name.0.span,
         })
     }).collect();
