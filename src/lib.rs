@@ -38,8 +38,8 @@ pub fn plugin_registrar(reg: &mut Registry) {
 
 fn get_bind_names(pat: &Pat) -> Vec<(SpannedIdent, Mutability)> {
     match pat.node {
-        PatIdent(BindingMode::ByRef(mutability), ref si, ref op) |
-        PatIdent(BindingMode::ByValue(mutability), ref si, ref op) => {
+        PatKind::Ident(BindingMode::ByRef(mutability), ref si, ref op) |
+        PatKind::Ident(BindingMode::ByValue(mutability), ref si, ref op) => {
             let mut res = if let Some(ref p) = *op {
                 get_bind_names(p)
             } else {
@@ -57,22 +57,22 @@ fn get_bind_names(pat: &Pat) -> Vec<(SpannedIdent, Mutability)> {
 
             res
         }
-        PatEnum(_, Some(ref v)) | PatTup(ref v) => {
+        PatKind::TupleStruct(_, Some(ref v)) | PatKind::Tup(ref v) => {
             let mut res = Vec::new();
             for it in v {
                 res.extend_from_slice(&get_bind_names(it));
             }
             res
         }
-        PatStruct(_, ref v, _) => {
+        PatKind::Struct(_, ref v, _) => {
             let mut res = Vec::new();
             for it in v {
                 res.extend_from_slice(&get_bind_names(&*it.node.pat));
             }
             res
         }
-        PatBox(ref p) | PatRegion(ref p, _) => get_bind_names(p),
-        PatVec(ref v1, ref op, ref v2) => {
+        PatKind::Box(ref p) | PatKind::Ref(ref p, _) => get_bind_names(p),
+        PatKind::Vec(ref v1, ref op, ref v2) => {
             let mut res = Vec::new();
             for it in v1 {
                 res.extend_from_slice(&get_bind_names(it));
@@ -103,7 +103,7 @@ fn parse_try_let<'a>(mac_span: Span,
     // the body of the first branch.
     let names_exprs = names.iter().map(|name| {
         parser.mk_expr(name.0.span.lo, name.0.span.hi,
-                       ExprPath(None, Path {
+                       ExprKind::Path(None, Path {
                            span: name.0.span,
                            global: false,
                            segments: vec![PathSegment {
@@ -113,7 +113,7 @@ fn parse_try_let<'a>(mac_span: Span,
                        }), None)
     }).collect();
     let default_arm = parser.mk_expr(pat.span.lo, pat.span.hi,
-                                     ExprTup(names_exprs), None);
+                                     ExprKind::Tup(names_exprs), None);
 
     // Create the first arm of the match statement
     let mut arms = vec![Arm {
@@ -136,7 +136,7 @@ fn parse_try_let<'a>(mac_span: Span,
         // else EXPR
         try!(parser.expect_keyword(token::keywords::Else));
         let e = try!(parser.parse_expr());
-        let pat = PatWild;
+        let pat = PatKind::Wild;
         arms.push(Arm {
             attrs: Vec::new(),
             pats: vec![P(Pat {
@@ -149,7 +149,7 @@ fn parse_try_let<'a>(mac_span: Span,
         });
     }
     let match_expr = parser.mk_expr(mac_span.lo, mac_span.hi,
-                                    ExprMatch(expr, arms), None);
+                                    ExprKind::Match(expr, arms), None);
 
     // Create the resulting pattern to bind against
     // let let_stmt = parser.mk_stmt(mac_span.lo, mac_span)
@@ -157,17 +157,17 @@ fn parse_try_let<'a>(mac_span: Span,
     let names_pats = names.iter().map(|name| {
         P(Pat{
             id: DUMMY_NODE_ID,
-            node: PatIdent(BindingMode::ByValue(name.1), name.0, None),
+            node: PatKind::Ident(BindingMode::ByValue(name.1), name.0, None),
             span: name.0.span,
         })
     }).collect();
     let names_pat = P(Pat {
         id: DUMMY_NODE_ID,
-        node: PatTup(names_pats),
+        node: PatKind::Tup(names_pats),
         span: pat_span
     });
-    let stmt = P(spanned(mac_span.lo, mac_span.hi, StmtDecl(P(spanned(
-        mac_span.lo, mac_span.hi, DeclLocal(P(Local {
+    let stmt = P(spanned(mac_span.lo, mac_span.hi, StmtKind::Decl(P(spanned(
+        mac_span.lo, mac_span.hi, DeclKind::Local(P(Local {
             ty: None,
             pat: names_pat,
             init: Some(match_expr),
@@ -186,7 +186,7 @@ fn expand_try_let<'a>(ec: &'a mut ExtCtxt,
     let mut parser = ec.new_parser_from_tts(tts);
 
     match parse_try_let(mac_span, &mut parser) {
-        Ok(e) => MacEager::stmts(e),
+        Ok(e) => MacEager::stmts(e.into_iter().map(|x| x.unwrap()).collect()),
         Err(_) => DummyResult::expr(mac_span),
     }
 }
