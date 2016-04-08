@@ -7,9 +7,6 @@ extern crate syntax;
 extern crate rustc;
 
 #[macro_use]
-extern crate rustc_front;
-
-#[macro_use]
 extern crate rustc_plugin;
 
 use rustc_plugin::Registry;
