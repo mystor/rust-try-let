@@ -14,7 +14,6 @@ use syntax::parse::token::intern;
 use syntax::codemap::{Span, spanned};
 use syntax::ast::*;
 use syntax::ext::base::{MacResult, ExtCtxt, DummyResult, MacEager};
-use syntax::ext::build::AstBuilder;
 use syntax::parse::token;
 use syntax::parse::parser::{Parser, Restrictions};
 use syntax::parse::PResult;
@@ -54,7 +53,7 @@ fn get_bind_names(pat: &Pat) -> Vec<(SpannedIdent, Mutability)> {
 
             res
         }
-        PatKind::TupleStruct(_, Some(ref v)) | PatKind::Tup(ref v) => {
+        PatKind::TupleStruct(_, ref v, _) | PatKind::Tuple(ref v, _) => {
             let mut res = Vec::new();
             for it in v {
                 res.extend_from_slice(&get_bind_names(it));
@@ -160,7 +159,7 @@ fn parse_try_let<'a>(mac_span: Span,
     }).collect();
     let names_pat = P(Pat {
         id: DUMMY_NODE_ID,
-        node: PatKind::Tup(names_pats),
+        node: PatKind::Tuple(names_pats, None),
         span: pat_span
     });
     let stmt = P(spanned(mac_span.lo, mac_span.hi, StmtKind::Decl(P(spanned(

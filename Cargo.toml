@@ -1,6 +1,6 @@
 [package]
 name = "try-let"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Michael Layzell <michael@thelayzells.com>"]
 
 description = "A syntax extension for a basic try-let form"
