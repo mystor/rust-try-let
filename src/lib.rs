@@ -11,12 +11,13 @@ extern crate rustc_plugin;
 
 use rustc_plugin::Registry;
 use syntax::parse::token::intern;
-use syntax::codemap::{Span, spanned};
+use syntax::codemap::Span;
 use syntax::ast::*;
 use syntax::ext::base::{MacResult, ExtCtxt, DummyResult, MacEager};
 use syntax::parse::token;
 use syntax::parse::parser::{Parser, Restrictions};
 use syntax::parse::PResult;
+use syntax::tokenstream::TokenTree;
 use syntax::ptr::*;
 use syntax::util::small_vector::SmallVector;
 
@@ -86,7 +87,7 @@ fn get_bind_names(pat: &Pat) -> Vec<(SpannedIdent, Mutability)> {
 }
 
 fn parse_try_let<'a>(mac_span: Span,
-                     parser: &mut Parser<'a>) -> PResult<'a, SmallVector<P<Stmt>>> {
+                     parser: &mut Parser<'a>) -> PResult<'a, SmallVector<Stmt>> {
     let pat = try!(parser.parse_pat());
     let pat_span = pat.span;
     try!(parser.expect(&token::Eq));
@@ -106,10 +107,11 @@ fn parse_try_let<'a>(mac_span: Span,
                                identifier: name.0.node,
                                parameters: PathParameters::none()
                            }]
-                       }), None)
+                       }), ThinVec::new())
     }).collect();
     let default_arm = parser.mk_expr(pat.span.lo, pat.span.hi,
-                                     ExprKind::Tup(names_exprs), None);
+                                     ExprKind::Tup(names_exprs),
+                                     ThinVec::new());
 
     // Create the first arm of the match statement
     let mut arms = vec![Arm {
@@ -145,11 +147,10 @@ fn parse_try_let<'a>(mac_span: Span,
         });
     }
     let match_expr = parser.mk_expr(mac_span.lo, mac_span.hi,
-                                    ExprKind::Match(expr, arms), None);
+                                    ExprKind::Match(expr, arms),
+                                    ThinVec::new());
 
     // Create the resulting pattern to bind against
-    // let let_stmt = parser.mk_stmt(mac_span.lo, mac_span)
-
     let names_pats = names.iter().map(|name| {
         P(Pat{
             id: DUMMY_NODE_ID,
@@ -162,17 +163,20 @@ fn parse_try_let<'a>(mac_span: Span,
         node: PatKind::Tuple(names_pats, None),
         span: pat_span
     });
-    let stmt = P(spanned(mac_span.lo, mac_span.hi, StmtKind::Decl(P(spanned(
-        mac_span.lo, mac_span.hi, DeclKind::Local(P(Local {
+
+    // Return the stmts
+    Ok(SmallVector::one(Stmt {
+        id: DUMMY_NODE_ID,
+        span: mac_span,
+        node: StmtKind::Local(P(Local {
             ty: None,
             pat: names_pat,
             init: Some(match_expr),
             id: DUMMY_NODE_ID,
             span: mac_span,
-            attrs: None,
-        })))), DUMMY_NODE_ID)));
-
-    Ok(SmallVector::one(stmt))
+            attrs: ThinVec::new(),
+        }))
+    }))
 }
 
 fn expand_try_let<'a>(ec: &'a mut ExtCtxt,
@@ -182,7 +186,7 @@ fn expand_try_let<'a>(ec: &'a mut ExtCtxt,
     let mut parser = ec.new_parser_from_tts(tts);
 
     match parse_try_let(mac_span, &mut parser) {
-        Ok(e) => MacEager::stmts(e.into_iter().map(|x| x.unwrap()).collect()),
+        Ok(stmts) => MacEager::stmts(stmts),
         Err(_) => DummyResult::expr(mac_span),
     }
 }
