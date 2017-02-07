@@ -2,6 +2,9 @@
 
 [![Build Status](https://travis-ci.org/mystor/rust-try-let.svg?branch=master)](https://travis-ci.org/mystor/rust-try-let)
 
+> This is very out of date right now, and I don't have the time or desire
+> to fix it up to run on nightly again, so it's going to go on hold.
+
 This is an implementation of a `try-let` similar to the one proposed in
 [RFC #1303](https://github.com/rust-lang/rfcs/pull/1303), as a syntax 
 extension. 
