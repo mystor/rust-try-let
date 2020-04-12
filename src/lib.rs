@@ -26,7 +26,9 @@
 //! # use try_let::try_let;
 //! # fn main() -> Result<(), &'static str> {
 //! # let foo = Some(());
-//! try_let!(Some(x) = foo else return Err("Shoot! There was a problem!"));
+//! try_let!(Some(x) = foo else {
+//!     return Err("Shoot! There was a problem!")
+//! });
 //! # Ok(())
 //! # }
 //! ```
@@ -47,7 +49,9 @@
 //!
 //! let foo = E::A(0, 21, 10, 34, Some(5), Err(32));
 //!
-//! try_let!(E::A(a, 21, c, 34, Some(e), Err(f)) = foo else panic!());
+//! try_let!(E::A(a, 21, c, 34, Some(e), Err(f)) = foo else {
+//!     unreachable!()
+//! });
 //! // a, c, e, and f are all bound here.
 //! assert_eq!(a, 0);
 //! assert_eq!(c, 10);
@@ -72,7 +76,9 @@
 //! # use try_let::try_let;
 //! # fn main() -> Result<(), &'static str> {
 //! # let foo = Some(10);
-//! try_let!(Some(x) = foo else return Err("Shoot! There was a problem!"));
+//! try_let!(Some(x) = foo else {
+//!     return Err("Shoot! There was a problem!");
+//! });
 //! // ... becomes ...
 //! let (x,) = match foo {
 //!     Some(x) => (x,),
@@ -94,7 +100,9 @@
 //! # use try_let::try_let;
 //! # fn main() {
 //! # let foo = Some(10);
-//! try_let!(None = foo else return);
+//! try_let!(None = foo else {
+//!     return;
+//! });
 //! // ... becomes ...
 //! let () = match foo {
 //!     None => (),
@@ -120,14 +128,14 @@
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::visit::{self, Visit};
-use syn::{parse_macro_input, Expr, Ident, Pat, PatIdent, Result, Token};
+use syn::{parse_macro_input, Block, Expr, Ident, Pat, PatIdent, Result, Token};
 
 struct TryLet {
     pat: Pat,
     _eq_token: Token![=],
     expr: Expr,
     _else_token: Token![else],
-    fallback: Expr,
+    fallback: Block,
 }
 
 impl Parse for TryLet {
