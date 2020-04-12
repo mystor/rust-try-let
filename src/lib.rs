@@ -47,7 +47,7 @@
 //!
 //! let foo = E::A(0, 21, 10, 34, Some(5), Err(32));
 //!
-//! try_let!(E::A(a, 21, c, 34, Some(e), Err(f)) = foo else return);
+//! try_let!(E::A(a, 21, c, 34, Some(e), Err(f)) = foo else panic!());
 //! // a, c, e, and f are all bound here.
 //! assert_eq!(a, 0);
 //! assert_eq!(c, 10);
@@ -76,7 +76,9 @@
 //! // ... becomes ...
 //! let (x,) = match foo {
 //!     Some(x) => (x,),
-//!     _ => return Err("Shoot! There was a problem!"),
+//!     _ => {
+//!         return Err("Shoot! There was a problem!");
+//!     }
 //! };
 //! # Ok(())
 //! # }
@@ -96,7 +98,9 @@
 //! // ... becomes ...
 //! let () = match foo {
 //!     None => (),
-//!     _ => return,
+//!     _ => {
+//!         return;
+//!     }
 //! };
 //! # }
 //! ```
@@ -165,6 +169,9 @@ impl<'a> Visit<'_> for Visitor<'a> {
     }
 }
 
+/// The whole point
+///
+/// See the module-level documentation for details.
 #[proc_macro]
 pub fn try_let(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let TryLet {
@@ -183,12 +190,12 @@ pub fn try_let(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // NOTE: This doesn't use `mixed_site`, however it also doesn't introduce
     // any new identifiers not from the call-site.
     let output = quote!(
-        let (#(#bindings,)*) = if let #pat = (#expr) {
-            (#(#bindings,)*)
-        } else {
-            #fallback
+        let (#(#bindings,)*) = match (#expr) {
+            #pat => (#(#bindings,)*),
+            _ => {
+                #fallback;
+            }
         };
     );
-    println!("output = {}", output);
     return output.into();
 }
