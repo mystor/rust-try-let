@@ -1,13 +1,18 @@
 [package]
 name = "try-let"
-version = "0.1.5"
-authors = ["Michael Layzell <michael@thelayzells.com>"]
+version = "0.2.0"
+authors = ["Nika Layzell <nika@thelayzells.com>"]
+edition = "2018"
 
-description = "A syntax extension for a basic try-let form"
+description = "Proc macro for a basic try-let form"
 repository = "https://github.com/mystor/rust-try-let"
 readme = "README.md"
 license = "MPL-2.0"
 keywords = ["try-let"]
 
 [lib]
-plugin = true
+proc-macro = true
+
+[dependencies]
+syn = { version = "1.0", features = ["full", "visit"] }
+quote = "1.0"

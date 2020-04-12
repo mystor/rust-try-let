@@ -2,28 +2,25 @@
 
 [![Build Status](https://travis-ci.org/mystor/rust-try-let.svg?branch=master)](https://travis-ci.org/mystor/rust-try-let)
 
-> This is very out of date right now, and I don't have the time or desire
-> to fix it up to run on nightly again, so it's going to go on hold.
-
 This is an implementation of a `try-let` similar to the one proposed in
-[RFC #1303](https://github.com/rust-lang/rfcs/pull/1303), as a syntax 
-extension. 
+[RFC #1303](https://github.com/rust-lang/rfcs/pull/1303), as a proc macro.
 
-> _NOTE:_ This is a syntax extension, and thus uses unstable features and
-> will not work on stable rust.
+> _NOTE:_ Proc macros in statement position are currently unstable, meaning this
+> macro will not work on stable rust until
+> [PR #68717](https://github.com/rust-lang/rust/pull/68717) is merged.
 
 ## Usage
 
-try-let is implemented using a syntax extension instead of a macro, as
-parsing the pattern expression in the way which try-let needs to is not
-possible with a `macro_rules!` macro.
+try-let is implemented using a proc macro instead, as parsing the pattern
+expression in the way which try-let needs to is not possible with a
+`macro_rules!` macro.
 
-To use the plugin, add `#[plugin(try_let)]` to the top of the project, 
-like so:
+This plugin currently requires enabling `#![feature(proc_macro_hygiene)]`, like
+so:
 
 ```rust
-#![feature(plugin)]
-#![plugin(try_let)]
+#![feature(proc_macro_hygiene)]
+use try_let::try_let;
 ```
 
 The actual use is fairly similar to a `let` expression:
@@ -79,17 +76,6 @@ let (x,) = match ... {
 };
 ```
 
-```rust
-try_let!(Ok(x) = ... {
-    Err(e) => return e
-});
-// ... becomes ...
-let (x,) = match ... {
-    Ok(x) => (x,),
-    Err(e) => return e,
-};
-```
-
 ### A note on `None` and empty enum variants
 
 A question which some people will be asking now is how are enum variants like
@@ -115,4 +101,3 @@ that information.
 Instead, the extension checks the first character of the identifier. If it is an
 ASCII capital, we assume it is a empty enum variant, and otherwise we assume it
 is a variable binding.
-
